@@ -1,22 +1,58 @@
-# HardHat-Object-Detection-YOLOv8
+# Hard-Hat Detection with YOLOv8
 
-## Project Description
+Object detection for construction sites: classify workers as wearing a helmet, bare head, or person (context class).
 
-HardHat-Object-Detection-YOLOv8 is a computer vision project designed to enhance safety measures in construction environments. By employing the state-of-the-art YOLOv8 (You Only Look Once version 8) algorithm, this project aims to accurately detect and identify whether construction workers are wearing their safety helmets or not. We will also take a look at YOLOv5, for comparison.
+![Validation labels — ground truth bounding boxes on site images](https://github.com/felipebasurto/hardhat-object-detection-yolov8/assets/62935664/761fcefa-3eda-4054-8758-7cacdbba27b9)
 
-The primary goal of this initiative is to assist supervisors, safety officers, and automated systems in maintaining and enforcing safety regulations on site. The integration of AI in safety protocol monitoring opens the potential for real-time alerting and tracking of safety breaches, allowing for swift corrective actions.
+## What this repo contains
 
-## Technical Overview
+- **`hardhat-workers-detection-yolov8.ipynb`** — train and compare two Ultralytics detectors on the same dataset
+- **`output/`** — YOLOv8 training curves, confusion matrix, and validation predictions from the run captured in the notebook
 
-This project leverages the YOLOv8 object detection algorithm, which is well-regarded for its detection accuracy and real-time performance. This algorithm enables the software to identify and differentiate between construction workers wearing hard hats and those who are not.
+## Training setup
 
-The software can be integrated into an existing video surveillance system to continuously monitor compliance with safety protocols. On detecting a worker without a helmet, the system can trigger alerts for immediate action. This way, the project aims to contribute significantly to accident prevention in the construction industry.
+Both models were trained on the **Hard Hat Workers** dataset (75/25 train–test split, YOLO format) with three classes: `head`, `helmet`, and `person`.
 
-## Usage
+| Model | Backbone | Epochs | Image size |
+|-------|----------|--------|------------|
+| YOLOv8 | `yolov8s.pt` | 30 | 640 |
+| YOLOv5 | `yolov5su.pt` | 30 | 640 |
 
-To use HardHat-Object-Detection-YOLOv8, simply clone this repository and execute the main Python notebook. (Since it is a personal project, i don't plan to get it production-ready) Ensure that the software has access to either a live video feed or a recorded video file from your construction site.
+After 30 epochs on the validation set (1,766 images):
 
-Please note: This project is for academic or personal use and should not replace manual supervision in critical safety situations. Its performance may vary based on numerous factors, including the quality of input video and the presence of obstructions in the scene.
+| Model | mAP@50 | Helmet mAP@50 | Head mAP@50 |
+|-------|--------|---------------|-------------|
+| YOLOv8 | 0.664 | 0.986 | 0.973 |
+| YOLOv5 | 0.663 | 0.986 | 0.972 |
 
+Overall metrics are nearly identical; the notebook compares confusion matrices and side-by-side validation predictions. Helmet vs. head classification is strong; the `person` class is underrepresented in the dataset and performs poorly on both models.
 
-![val_batch2_labels](https://github.com/felipebasurto/hardhat-object-detection-yolov8/assets/62935664/761fcefa-3eda-4054-8758-7cacdbba27b9)
+## How to run
+
+1. **Clone the repo**
+   ```bash
+   git clone https://github.com/felipebasurto/hardhat-object-detection-yolov8.git
+   cd hardhat-object-detection-yolov8
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pip install ultralytics
+   ```
+
+3. **Get the dataset** — download the Hard Hat Workers dataset in YOLOv8 format (must include `data.yaml`, train/val image folders, and labels). The notebook expects it unzipped locally.
+
+4. **Open the notebook** — `hardhat-workers-detection-yolov8.ipynb`
+   - Update the `HOME` variable to point at your unzipped dataset directory.
+   - The notebook was written for Google Colab; skip or replace the Google Drive mount cell if running locally.
+   - A CUDA GPU is recommended for training (`nvidia-smi` cell checks availability).
+
+5. **Train or inspect results** — run cells sequentially. Training writes weights and plots to `runs/detect/`. To run inference on new images without retraining, load the saved weights from that folder (see the final notebook section).
+
+## Limitations
+
+Performance depends on video/image quality, lighting, and occlusions. Small or partially hidden heads are harder to classify, and the model was validated on the Hard Hat Workers split—not deployed on live site footage in this repo.
+
+## Stack
+
+[Ultralytics YOLO](https://github.com/ultralytics/ultralytics) · Python · Jupyter
